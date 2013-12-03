@@ -6,15 +6,19 @@ https://github.com/go1dshtein/selectel-api
 
 from . import Storage
 import cache
+from requests.exceptions import HTTPError
 from selectel.storage import Container
 
 
-def ioerror(func):
+def doesnotexists(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except Exception as err:
-            raise IOError(err)
+        except HTTPError as err:
+            if err.response.status_code == 404:
+                raise IOError('File does not exists: \'{0}\''.format(args[1]))
+            else:
+                raise
     return wrapper
 
 
@@ -26,48 +30,65 @@ class SelectelStorage(Storage):
         self._container = Container(auth, key, container_name)
 
     def make_key(self, path):
+        "any path should be absolute"
+
         if not path.startswith('/'):
             return '/%s' % path
         return path
 
+    def get_info(self, path):
+        try:
+            return self._container.info(self.make_key(path))
+        except HTTPError as err:
+            if err.response.status_code == 404:
+                raise OSError('File does not exists: \'{0}\''.format(path))
+            else:
+                raise
+
     @cache.get
-    @ioerror
+    @doesnotexists
     def get_content(self, path):
         return self._container.get(self.make_key(path))
 
     @cache.put
-    @ioerror
+    @doesnotexists
     def put_content(self, path, content):
         self._container.put(self.make_key(path), content)
 
     @cache.put
-    @ioerror
+    @doesnotexists
     def stream_write(self, path, fp):
         self._container.put_stream(self.make_key(path), fp)
 
     @cache.get
-    @ioerror
+    @doesnotexists
     def stream_read(self, path):
         return self._container.get_stream(self.make_key(path))
 
-    @ioerror
     def get_size(self, path):
-        return self._container.info(self.make_key(path))['content-length']
+        return self.get_info(path)['content-length']
 
-    @ioerror
     def list_directory(self, path=None):
         if path is None:
             path = "/"
-        return self._container.list(self.make_key(path)).keys()
+
+        keys = self._container.list(self.make_key(path)).keys()
+
+        for key in keys:
+            yield key
+
+        if not keys:
+            raise OSError(
+                'Directory is empty or does not exists: \'{0}\''.format(path))
 
     def exists(self, path):
         try:
-            self._container.info(self.make_key(path))
+            self.get_info(path)
             return True
-        except Exception:
+        except OSError:
             return False
 
     @cache.remove
-    @ioerror
+    @doesnotexists
     def remove(self, path):
         self._container.remove(self.make_key(path), force=True)
