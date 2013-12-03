@@ -155,6 +155,9 @@ def load(kind=None):
     elif kind == 'elliptics':
         import ellipticsbackend
         store = ellipticsbackend.EllipticsStorage(cfg)
+    elif kind == 'selectel':
+        import selectelbackend
+        store = selectelbackend.SelectelStorage(cfg)
     elif kind == 'gcs':
         import gcs
         store = gcs.GSStorage(cfg)
