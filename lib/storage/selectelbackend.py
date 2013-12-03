@@ -1,3 +1,9 @@
+"""
+Selectel Cloud Storage backend
+See: https://selectel.ru/services/cloud-storage/
+https://github.com/go1dshtein/selectel-api
+"""
+
 import cache
 from . import Storage
 
