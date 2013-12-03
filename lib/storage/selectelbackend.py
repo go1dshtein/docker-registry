@@ -4,9 +4,8 @@ See: https://selectel.ru/services/cloud-storage/
 https://github.com/go1dshtein/selectel-api
 """
 
-import cache
 from . import Storage
-
+import cache
 from selectel.storage import Container
 
 
@@ -65,7 +64,7 @@ class SelectelStorage(Storage):
         try:
             self._container.info(self.make_key(path))
             return True
-        except Exception as err:
+        except Exception:
             return False
 
     @cache.remove
