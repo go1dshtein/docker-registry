@@ -6,15 +6,15 @@ https://github.com/go1dshtein/selectel-api
 
 from . import Storage
 import cache
-from requests.exceptions import HTTPError
-from selectel.storage import Container
+import requests
+import selectel
 
 
 def doesnotexists(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except HTTPError as err:
+        except requests.exceptions.HTTPError as err:
             if err.response.status_code == 404:
                 raise IOError('File does not exists: \'{0}\''.format(args[1]))
             else:
@@ -27,7 +27,7 @@ class SelectelStorage(Storage):
         auth = config.selectel_auth
         key = config.selectel_key
         container_name = config.selectel_container
-        self._container = Container(auth, key, container_name)
+        self._container = selectel.storage.Container(auth, key, container_name)
 
     def make_key(self, path):
         "any path should be absolute"
@@ -39,7 +39,7 @@ class SelectelStorage(Storage):
     def get_info(self, path):
         try:
             return self._container.info(self.make_key(path))
-        except HTTPError as err:
+        except requests.exceptions.HTTPError as err:
             if err.response.status_code == 404:
                 raise OSError('File does not exists: \'{0}\''.format(path))
             else:
