@@ -5,7 +5,7 @@ https://github.com/go1dshtein/selectel-api
 """
 
 from . import Storage
-import cache
+import cache_lru
 import requests
 import selectel
 
@@ -45,22 +45,22 @@ class SelectelStorage(Storage):
             else:
                 raise
 
-    @cache.get
+    @cache_lru.get
     @doesnotexists
     def get_content(self, path):
         return self._container.get(self.make_key(path))
 
-    @cache.put
+    @cache_lru.put
     @doesnotexists
     def put_content(self, path, content):
         self._container.put(self.make_key(path), content)
 
-    @cache.put
+    @cache_lru.put
     @doesnotexists
     def stream_write(self, path, fp):
         self._container.put_stream(self.make_key(path), fp)
 
-    @cache.get
+    @cache_lru.get
     @doesnotexists
     def stream_read(self, path):
         return self._container.get_stream(self.make_key(path))
@@ -88,7 +88,7 @@ class SelectelStorage(Storage):
         except OSError:
             return False
 
-    @cache.remove
+    @cache_lru.remove
     @doesnotexists
     def remove(self, path):
         self._container.remove(self.make_key(path), force=True)
